@@ -1,0 +1,45 @@
+rem ///////////////////////////////////////////////////////////
+rem Program: Hreodwrit - A writing pen
+rem Author:  Bill Chatfield
+rem License: GPL2
+rem //////////////////////////////////////////////////////////
+
+section variables
+    dim b$(500) { Editing buffer }
+    d$=chr$(4)
+closesection
+
+section splash
+    print "Hreodwrit - A writing pen"
+    print "Copyright (c) 2019 Bill Chatfield"
+    print "Distributed under the GPL2"
+    gosub @openFile
+closesection
+
+section main
+    end
+closesection
+
+£openFile
+    print "File:";
+    input f$
+    print d$;"open";f$
+    print d$;"read";f$
+    i=0
+    on err goto @errorHandler
+    £readLineLoop
+        input b$(i)
+        i=i+1
+    goto @readLineLoop
+    £errorHandler
+        poke 216,0 { Turn off error handler }
+        e = peek(222) { Get the error code }
+        print d$;"close";f$ { Close the open file }        
+        if e < > 5 then goto @die { 5 is the expected EOF }
+return
+
+£die
+    print "Error ";e
+end
+
+
