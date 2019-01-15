@@ -7,35 +7,105 @@ rem //////////////////////////////////////////////////////////
 section variables
     dim b$(500) { Editing buffer }
     d$=chr$(4)
+	f${nameOfFileInEditor}=""
+	lc{lineCount}=0
+	ml{maxLines}=500
+	mc{maxColumns}=255
+	cx{currentScreenX}=1
+	cy{currentScreenY}=1
+	cl{currentLineInFile}=1
+	cc{currentColumnInFile}=1
+	sw{screenWidth}=40
+	sh{screenHeight}=24
+	bm{bufferModified}=0
 closesection
 
 section splash
+	text
     print "Hreodwrit - A writing pen"
     print "Copyright (c) 2019 Bill Chatfield"
-    print "Distributed under the GPL2"
-    gosub @openFile
+    print "Distributed under the GPLv2"
 closesection
 
 section main
-    end
+    gosub @openFile
+	gosub @display
+	£eventLoop
+		# Check open apple and closed apple keys
+		get k$
+	goto @eventLoop
+    
+	£atExit
+		if bm{bm{bufferModified} = 0 then goto @exit
+			print "Save file ";f${nameOfFileInEditor};"? (Y/N) ";
+			get k$
+			print k$
+			if k$ = "y" or k$ = "Y" then gosub @saveFile
+	£exit
+	end
 closesection
 
 £openFile
     print "File:";
     input f$
+	if f$ = "" then return
     print d$;"open";f$
     print d$;"read";f$
-    i=0
+    lc{lineCount}=0
     on err goto @errorHandler
     £readLineLoop
-        input b$(i)
-        i=i+1
+		if lc{lineCount} < ml{maxLines} then goto @addLine
+			print "File too large: ";f${nameOfFileInEditor}
+			print d$;"close";f$
+			end
+		£addLine
+        lc{lineCount}=lc{lineCount}+1
+        input b$(lc{lineCount})
     goto @readLineLoop
     £errorHandler
         poke 216,0 { Turn off error handler }
         e = peek(222) { Get the error code }
         print d$;"close";f$ { Close the open file }        
         if e < > 5 then goto @die { 5 is the expected EOF }
+return
+
+£saveFile
+    print d$;"open";f$
+    print d$;"write";f$
+    on err goto @errorHandler
+    for i = 1 to lc{lineCount}
+        print b$(i)
+    next
+    £errorHandler
+        poke 216,0 { Turn off error handler }
+        e = peek(222) { Get the error code }
+        print d$;"close";f$ { Close the open file }        
+        goto @die
+return
+
+
+£saveAsFile
+    print "File:";
+    input f$
+    print d$;"open";f$
+    print d$;"write";f$
+    on err goto @errorHandler
+    for i = 1 to lc{lineCount}
+        print b$(i)
+    next
+    £errorHandler
+        poke 216,0 { Turn off error handler }
+        e = peek(222) { Get the error code }
+        print d$;"close";f$ { Close the open file }        
+        goto @die
+return
+
+
+£display
+	home
+	for i = 1 to 24
+		print b$(i)
+	next
 return
 
 £die
