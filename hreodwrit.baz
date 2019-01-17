@@ -1,4 +1,4 @@
-rem ///////////////////////////////////////////////////////////
+rem //////////////////////////////////////////////////////////
 rem Program: Hreodwrit - A writing pen
 rem Author:  Bill Chatfield
 rem License: GPL2
@@ -7,21 +7,22 @@ rem //////////////////////////////////////////////////////////
 section variables
     dim b$(500) { Editing buffer }
     d$=chr$(4)
-	f${nameOfFileInEditor}=""
-	lc{lineCount}=0
-	ml{maxLines}=500
-	mc{maxColumns}=255
-	cx{currentScreenX}=1
-	cy{currentScreenY}=1
-	cl{currentLineInFile}=1
-	cc{currentColumnInFile}=1
-	sw{screenWidth}=40
-	sh{screenHeight}=24
-	bm{bufferModified}=0
+    f${nameOfFileInEditor}=""
+    lc{lineCount}=0
+    ml{maxLines}=500
+    mc{maxColumns}=255
+    cx{currentScreenX}=1
+    cy{currentScreenY}=1
+    cl{currentLineInFile}=1
+    cc{currentColumnInFile}=1
+    sw{screenWidth}=40
+    sh{screenHeight}=24
+    bm{bufferModified}=0
+    oa{openApple}=0
 closesection
 
 section splash
-	text
+    text
     print "Hreodwrit - A writing pen"
     print "Copyright (c) 2019 Bill Chatfield"
     print "Distributed under the GPLv2"
@@ -29,36 +30,44 @@ closesection
 
 section main
     gosub @openFile
-	gosub @display
-	£eventLoop
-		# Check open apple and closed apple keys
-		get k$
-	goto @eventLoop
+    gosub @display
+    £eventLoop
+        # Check open apple and closed apple keys
+        get k$
+        if peek(49249) > 127 then goto @openApplePressed
+            if asc(k$) = 3 then gosub @copyText
+
+        £openApplePressed
+            if k$ = "s" then gosub @saveFile
+
+            
+    goto @eventLoop
     
-	£atExit
-		if bm{bm{bufferModified} = 0 then goto @exit
-			print "Save file ";f${nameOfFileInEditor};"? (Y/N) ";
-			get k$
-			print k$
-			if k$ = "y" or k$ = "Y" then gosub @saveFile
-	£exit
-	end
+    £atExit
+    if bm{bufferModified} = 0 then goto @exit
+        print "Save file ";f${nameOfFileInEditor};"? (Y/N) ";
+        get k$
+        print k$
+        if k$ = "y" or k$ = "Y" then gosub @saveFile
+
+    £exit
+    end
 closesection
 
 £openFile
     print "File:";
     input f$
-	if f$ = "" then return
+    if f$ = "" then return
     print d$;"open";f$
     print d$;"read";f$
     lc{lineCount}=0
     on err goto @errorHandler
     £readLineLoop
-		if lc{lineCount} < ml{maxLines} then goto @addLine
-			print "File too large: ";f${nameOfFileInEditor}
-			print d$;"close";f$
-			end
-		£addLine
+        if lc{lineCount} < ml{maxLines} then goto @addLine
+            print "File too large: ";f${nameOfFileInEditor}
+            print d$;"close";f$
+            end
+        £addLine
         lc{lineCount}=lc{lineCount}+1
         input b$(lc{lineCount})
     goto @readLineLoop
